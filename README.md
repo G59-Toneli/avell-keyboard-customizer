@@ -5,9 +5,9 @@ barebones) on Linux — with a clean Tk desktop app **and** a `kbcolor` CLI.
 
 > Built and tested on an **Avell A62 LIV** (Intel i7-10750H, Uniwill single-zone
 > RGB) running Fedora. It should work on other Uniwill-based laptops exposing the
-> same EC interface — see [Hardware support](#hardware-support).
+> same EC interface — see [Compatibility](#compatibility).
 
-![status: works](https://img.shields.io/badge/status-working-3d45f0)
+[![CI](https://github.com/G59-Toneli/avell-keyboard-customizer/actions/workflows/ci.yml/badge.svg)](https://github.com/G59-Toneli/avell-keyboard-customizer/actions/workflows/ci.yml)
 ![license: MIT](https://img.shields.io/badge/license-MIT-3d45f0)
 ![python: 3.10+](https://img.shields.io/badge/python-3.10%2B-3d45f0)
 
