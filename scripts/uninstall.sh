@@ -10,6 +10,13 @@ if [ "$(id -u)" -ne 0 ]; then
     exit 1
 fi
 
+DKMS_NAME="tuxedo-drivers-avell"
+DKMS_VER="1.0.0"
+if command -v dkms >/dev/null && dkms status -m "$DKMS_NAME" 2>/dev/null | grep -q "$DKMS_NAME"; then
+    dkms remove -m "$DKMS_NAME" -v "$DKMS_VER" --all || true
+    rm -rf "/usr/src/${DKMS_NAME}-${DKMS_VER}"
+fi
+
 rm -f /usr/local/bin/kbcolor /usr/local/bin/kbcolor-gui
 rm -rf /usr/local/lib/avell-rgb-control
 rm -f /usr/share/applications/avell-rgb.desktop

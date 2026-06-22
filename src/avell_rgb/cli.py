@@ -27,6 +27,9 @@ _SPEED_NAMES = {"fast": 0x20, "medium": 0x50, "slow": 0x80, "slowest": 0xD0}
 
 
 def _parse_color(tokens: Sequence[str]) -> Color:
+    # Accept a single quoted "R G B" string as well as three separate args.
+    if len(tokens) == 1 and len(tokens[0].split()) == 3:
+        tokens = tokens[0].split()
     if len(tokens) == 3:
         try:
             return Color.from_triplet((int(tokens[0]), int(tokens[1]), int(tokens[2])))

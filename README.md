@@ -116,13 +116,15 @@ EC, so they may work too.
 ## Install
 
 ```bash
-# 1) Build & install the patched kernel module (see kernel/README.md for details)
-sudo ./scripts/install.sh
+# Build & install the patched module + udev rule + commands + desktop launcher
+sudo ./scripts/install.sh           # direct build (re-run after a kernel upgrade)
+sudo ./scripts/install.sh --dkms    # DKMS: rebuilds automatically on kernel upgrades
 ```
 
 `scripts/install.sh` builds the patched module, installs the udev rule (sudo-less
 access), the `modules-load`/blacklist configs, the `kbcolor` + `kbcolor-gui`
-commands, and a desktop launcher. To remove everything: `sudo ./scripts/uninstall.sh`.
+commands, and a desktop launcher. With `--dkms` the module is registered with DKMS
+so it survives kernel upgrades. To remove everything: `sudo ./scripts/uninstall.sh`.
 
 Prefer pip for just the userspace tools (driver still required):
 
