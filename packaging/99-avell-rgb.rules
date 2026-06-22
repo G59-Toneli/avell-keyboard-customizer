@@ -1,0 +1,8 @@
+# Grant the desktop user's group write access to the keyboard backlight so
+# avell-rgb-control runs without sudo. Re-applied on every (re)load of the
+# driver. scripts/install.sh substitutes __GROUP__ with the installing user's
+# primary group before copying this to /etc/udev/rules.d/.
+ACTION=="add", SUBSYSTEM=="leds", KERNEL=="rgb:kbd_backlight", \
+  RUN+="/usr/bin/chgrp __GROUP__ /sys/class/leds/%k/multi_intensity /sys/class/leds/%k/brightness", \
+  RUN+="/usr/bin/chmod 0664 /sys/class/leds/%k/multi_intensity /sys/class/leds/%k/brightness", \
+  RUN+="/bin/sh -c 'p=/sys/devices/platform/tuxedo_keyboard; chgrp __GROUP__ $p/kbd_rainbow $p/kbd_rainbow_speed 2>/dev/null; chmod 0664 $p/kbd_rainbow $p/kbd_rainbow_speed 2>/dev/null'"

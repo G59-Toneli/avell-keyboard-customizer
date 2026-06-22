@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=Keyboard RGB
+GenericName=Keyboard backlight color
+Comment=Control the RGB keyboard backlight
+Exec=kbcolor-gui
+Icon=input-keyboard
+Terminal=false
+Categories=Utility;Settings;HardwareSettings;
+Keywords=rgb;keyboard;backlight;color;led;

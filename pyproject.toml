@@ -1,0 +1,47 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "avell-keyboard-customizer"
+version = "1.0.0"
+description = "Customize the single-zone RGB keyboard backlight of Avell (Uniwill) laptops on Linux — GUI + CLI."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "G59-Toneli" }]
+keywords = ["rgb", "keyboard", "backlight", "avell", "uniwill", "tuxedo", "linux", "tkinter"]
+classifiers = [
+    "Environment :: X11 Applications",
+    "Intended Audience :: End Users/Desktop",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Python :: 3",
+    "Topic :: System :: Hardware",
+]
+dependencies = []  # standard library only (Tkinter ships with CPython)
+
+[project.optional-dependencies]
+dev = ["pytest>=7", "ruff>=0.4"]
+
+[project.scripts]
+kbcolor = "avell_rgb.cli:main"
+kbcolor-gui = "avell_rgb.app:main"
+
+[project.urls]
+Homepage = "https://github.com/G59-Toneli/avell-keyboard-customizer"
+Issues = "https://github.com/G59-Toneli/avell-keyboard-customizer/issues"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+
+[tool.ruff]
+line-length = 120
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F"]

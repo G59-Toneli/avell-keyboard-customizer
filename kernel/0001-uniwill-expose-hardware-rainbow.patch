@@ -1,0 +1,139 @@
+diff --git a/src/uniwill_interfaces.h b/src/uniwill_interfaces.h
+index 2b3edac..401516c 100644
+--- a/src/uniwill_interfaces.h
++++ b/src/uniwill_interfaces.h
+@@ -69,6 +69,7 @@ typedef void (uniwill_event_callb_t)(u32);
+ #define UW_EC_REG_KBD_BL_RGB_MODE			0x0767
+ #define UW_EC_REG_KBD_BL_RGB_MODE_BIT_APPLY_COLOR	0x20
+ #define UW_EC_REG_KBD_BL_RGB_MODE_BIT_RAINBOW		0x80
++#define UW_EC_REG_KBD_BL_RGB_SPEED			0x0768 // rainbow effect speed (higher = slower)
+ #define UW_EC_REG_KBD_BL_RGB_RED_BRIGHTNESS		0x0769
+ #define UW_EC_REG_KBD_BL_RGB_GREEN_BRIGHTNESS		0x076a
+ #define UW_EC_REG_KBD_BL_RGB_BLUE_BRIGHTNESS		0x076b
+diff --git a/src/uniwill_keyboard.h b/src/uniwill_keyboard.h
+index b5968d7..8d9e2f4 100644
+--- a/src/uniwill_keyboard.h
++++ b/src/uniwill_keyboard.h
+@@ -2156,6 +2156,104 @@ static bool uniwill_i8042_filter(unsigned char data, unsigned char str,
+ 	return false;
+ }
+ 
++/*
++ * Hardware keyboard RGB effects (Uniwill single-zone).
++ *
++ * The EC firmware can run a smooth color-cycle ("rainbow") on its own, toggled
++ * by bit 0x80 of the RGB mode register (0x0767). Its speed is set by a byte at
++ * 0x0768 (higher = slower; determined empirically). Upstream defines the rainbow
++ * bit but never exposes it, so we surface two attributes on the platform device:
++ *
++ *   kbd_rainbow        (W)  : "1" enable / "0" disable the firmware color cycle
++ *   kbd_rainbow_speed  (RW) : 0-255 effect speed (higher = slower)
++ *
++ * Doing the cycle in firmware keeps it perfectly smooth despite the EC's slow
++ * (~0.5 s) per-write latency, which makes a software-driven cycle look choppy.
++ */
++static int uw_kbd_set_rainbow(bool on)
++{
++	int result;
++	u8 data = 0;
++
++	result = uniwill_read_ec_ram(UW_EC_REG_KBD_BL_RGB_MODE, &data);
++	if (result)
++		return result;
++
++	if (on)
++		data |= UW_EC_REG_KBD_BL_RGB_MODE_BIT_RAINBOW;
++	else
++		data &= ~UW_EC_REG_KBD_BL_RGB_MODE_BIT_RAINBOW;
++	data |= UW_EC_REG_KBD_BL_RGB_MODE_BIT_APPLY_COLOR;
++
++	return uniwill_write_ec_ram(UW_EC_REG_KBD_BL_RGB_MODE, data);
++}
++
++static ssize_t kbd_rainbow_show(struct device *dev __always_unused,
++				struct device_attribute *attr __always_unused,
++				char *buf)
++{
++	u8 data = 0;
++	int result = uniwill_read_ec_ram(UW_EC_REG_KBD_BL_RGB_MODE, &data);
++
++	if (result)
++		return result;
++	return sysfs_emit(buf, "%u\n",
++			  (data & UW_EC_REG_KBD_BL_RGB_MODE_BIT_RAINBOW) ? 1 : 0);
++}
++
++static ssize_t kbd_rainbow_store(struct device *dev __always_unused,
++				 struct device_attribute *attr __always_unused,
++				 const char *buf, size_t count)
++{
++	bool on;
++	int result;
++
++	if (kstrtobool(buf, &on))
++		return -EINVAL;
++
++	result = uw_kbd_set_rainbow(on);
++	if (result)
++		return result;
++
++	return count;
++}
++static DEVICE_ATTR_RW(kbd_rainbow);
++
++static ssize_t kbd_rainbow_speed_show(struct device *dev __always_unused,
++				      struct device_attribute *attr __always_unused,
++				      char *buf)
++{
++	u8 data = 0;
++	int result = uniwill_read_ec_ram(UW_EC_REG_KBD_BL_RGB_SPEED, &data);
++
++	if (result)
++		return result;
++	return sysfs_emit(buf, "%u\n", data);
++}
++
++static ssize_t kbd_rainbow_speed_store(struct device *dev __always_unused,
++				       struct device_attribute *attr __always_unused,
++				       const char *buf, size_t count)
++{
++	u8 speed;
++
++	if (kstrtou8(buf, 0, &speed))
++		return -EINVAL;
++	if (uniwill_write_ec_ram(UW_EC_REG_KBD_BL_RGB_SPEED, speed))
++		return -EIO;
++	return count;
++}
++static DEVICE_ATTR_RW(kbd_rainbow_speed);
++
++static struct attribute *uw_kbd_rainbow_attrs[] = {
++	&dev_attr_kbd_rainbow.attr,
++	&dev_attr_kbd_rainbow_speed.attr,
++	NULL,
++};
++static struct attribute_group uw_kbd_rainbow_attr_group = {
++	.attrs = uw_kbd_rainbow_attrs,
++};
++
+ static int uniwill_keyboard_probe(struct platform_device *dev)
+ {
+ 	u32 i;
+@@ -2199,6 +2297,8 @@ static int uniwill_keyboard_probe(struct platform_device *dev)
+ 	uniwill_leds_init(dev);
+ 	uniwill_write_kbd_bl_enable(1);
+ 
++	sysfs_create_group(&dev->dev.kobj, &uw_kbd_rainbow_attr_group);
++
+ 	status = uw_lightbar_init(dev);
+ 	uw_lightbar_loaded = (status >= 0);
+ 
+@@ -2229,6 +2329,8 @@ static int uniwill_keyboard_remove(struct platform_device *dev)
+ static void uniwill_keyboard_remove(struct platform_device *dev)
+ #endif
+ {
++	sysfs_remove_group(&dev->dev.kobj, &uw_kbd_rainbow_attr_group);
++
+ 	if (uw_charging_prio_loaded)
+ 		sysfs_remove_group(&dev->dev.kobj, &uw_charging_prio_attr_group);
+ 
